@@ -34,3 +34,4 @@ function go(t){tab=t;render()}
 function render(){if(tab==='battle'&&!battle)tab='map';el('coins').textContent=s.coins;el('main').innerHTML='<div class="notice">📢 '+s.message+'</div>'+(tab==='home'?home():tab==='map'?map():tab==='battle'?combat():tab==='dex'?dex():shop());el('nav').innerHTML=[['home','🏠','照顧'],['map','🗺️','探索'],['battle','⚔️','對戰'],['dex','📖','圖鑑'],['shop','🎒','商店']].map(a=>'<button class="'+(tab===a[0]?'active':'')+'" onclick="go(\''+a[0]+'\')">'+a[1]+'<br>'+a[2]+'</button>').join('')}
 render();
 </script></html>
+<!-- GitHub Pages redeploy check 2026-11-18 -->
