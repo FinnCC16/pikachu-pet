@@ -11,11 +11,25 @@ function save(){s.last=Date.now();localStorage.setItem('pikachu-pet-v1',JSON.str
 let hours=Math.min(48,Math.max(0,(Date.now()-s.last)/3600000));s.hunger=clamp(s.hunger-hours*3);s.joy=clamp(s.joy-hours*2);s.clean=clamp(s.clean-hours*1.5);s.energy=clamp(s.energy+hours*2);save();
 function msg(t){s.message=t;save();render()}
 function xp(n){s.xp+=n;if(s.xp>=s.level*25){s.xp-=s.level*25;s.level++;s.maxHp+=5;s.hp=s.maxHp;s.coins+=30;s.message='皮卡丘升級了！獎勵 30 金幣！'}}
-function act(t){if(t==='feed'){if(!s.food)return msg('樹果用完了！');s.food--;s.hunger=clamp(s.hunger+25);s.bond=clamp(s.bond+3);return msg('🍎 皮卡丘開心地吃下樹果！')}
-if(t==='play'){if(s.energy<12)return msg('皮卡丘太累了！');s.joy=clamp(s.joy+22);s.energy=clamp(s.energy-12);s.hunger=clamp(s.hunger-6);s.bond=clamp(s.bond+5);s.coins+=8;xp(5);return msg('🎮 玩得真開心！獲得 8 金幣與 5 經驗')}
+let petMoodUntil=0,petMood='happy';
+function spriteMood(mood){
+  let svg=pikaSprite;
+  const eyes={
+    happy:'<path fill="#4b332a" d="M16 25h4v1h-4zM29 25h4v1h-4z"/>',
+    sleepy:'<path fill="#4b332a" d="M16 25h4v1h-4zM29 25h4v1h-4z"/>',
+    hungry:'<path fill="#4b332a" d="M16 23h4v4h-4zM29 23h4v4h-4z"/><path fill="#ffffff" d="M17 23h1v2h-1zM30 23h1v2h-1z"/>',
+    love:'<path fill="#f34b75" d="M16 22h2v1h2v-1h2v3h-1v1h-1v1h-2v-1h-1v-1h-1zM28 22h2v1h2v-1h2v3h-1v1h-1v1h-2v-1h-1v-1h-1z"/>'
+  };
+  if(!eyes[mood])return svg;
+  return svg.replace(/<path fill="#4b332a" d="M16 22h4v5h-4zM29 22h4v5h-4z"\/><path fill="#ffffff" d="M17 22h1v2h-1zM30 22h1v2h-1z"\/>/,eyes[mood]);
+}
+function currentMood(){if(Date.now()<petMoodUntil)return petMood;if(s.energy<25)return 'sleepy';if(s.hunger<30)return 'hungry';if(s.joy>75)return 'happy';return 'normal'}
+function petReaction(m){petMood=m;petMoodUntil=Date.now()+2200}
+function act(t){if(t==='feed'){petReaction('happy');if(!s.food)return msg('樹果用完了！');s.food--;s.hunger=clamp(s.hunger+25);s.bond=clamp(s.bond+3);return msg('🍎 皮卡丘開心地吃下樹果！')}
+if(t==='play'){petReaction('happy');if(s.energy<12)return msg('皮卡丘太累了！');s.joy=clamp(s.joy+22);s.energy=clamp(s.energy-12);s.hunger=clamp(s.hunger-6);s.bond=clamp(s.bond+5);s.coins+=8;xp(5);return msg('🎮 玩得真開心！獲得 8 金幣與 5 經驗')}
 if(t==='wash'){s.clean=clamp(s.clean+32);return msg('🫧 洗得乾乾淨淨！')}
-if(t==='rest'){s.energy=clamp(s.energy+35);s.hp=Math.min(s.maxHp,s.hp+18);return msg('💤 睡了個好覺！')}
-if(t==='pet'){s.joy=clamp(s.joy+9);s.bond=clamp(s.bond+3);return msg('💕 皮卡丘蹭了蹭你的手！')}
+if(t==='rest'){petReaction('sleepy');s.energy=clamp(s.energy+35);s.hp=Math.min(s.maxHp,s.hp+18);return msg('💤 睡了個好覺！')}
+if(t==='pet'){petReaction('love');s.joy=clamp(s.joy+9);s.bond=clamp(s.bond+3);return msg('💕 皮卡丘蹭了蹭你的手！')}
 if(t==='heal'){if(!s.potions)return msg('傷藥用完了！');s.potions--;s.hp=Math.min(s.maxHp,s.hp+30);return msg('🧪 恢復了 30 HP！')}}
 function stat(name,v){return '<div><small>'+name+' '+Math.round(v)+'%</small><div class="bar"><div class="fill" style="width:'+clamp(v)+'%"></div></div></div>'}
 function home(){return '<div class="panel"><b>皮卡丘 Lv.'+s.level+'</b> 💕 '+Math.round(s.bond)+'<p class="muted">HP '+s.hp+'/'+s.maxHp+' · 經驗 '+s.xp+'/'+s.level*25+'</p><div class="scene"><div>'+(s.hunger<25?'肚子餓了…':s.energy<20?'想睡覺…':'皮卡皮卡！')+'</div><div class="pet" onclick="act(\'pet\')">'+pikaSprite+'</div><small>點皮卡丘摸摸牠</small></div><div class="bars">'+stat('🍎 飽足',s.hunger)+stat('💛 心情',s.joy)+stat('🫧 清潔',s.clean)+stat('💤 體力',s.energy)+'</div></div><div class="panel"><h3>照顧皮卡丘</h3><div class="actions"><button onclick="act(\'feed\')">🍎 餵食 ×'+s.food+'</button><button onclick="act(\'play\')">🎮 玩耍</button><button onclick="act(\'wash\')">🫧 洗澡</button><button onclick="act(\'rest\')">💤 休息</button><button onclick="act(\'pet\')">💕 摸摸</button><button onclick="act(\'heal\')">🧪 傷藥 ×'+s.potions+'</button></div></div>'}
@@ -33,6 +47,6 @@ function shop(){return '<div class="panel"><h3>🏪 道具商店</h3>'+[['food',
 function reset(){if(confirm('確定清除進度？')){s=fresh();battle=null;tab='home';msg('新的冒險開始了！')}}
 function go(t){tab=t;render()}
 function render(){if(tab==='battle'&&!battle)tab='map';el('coins').textContent=s.coins;el('main').innerHTML='<div class="notice">📢 '+s.message+'</div>'+(tab==='home'?home():tab==='map'?map():tab==='battle'?combat():tab==='dex'?dex():shop());el('nav').innerHTML=[['home','🏠','照顧'],['map','🗺️','探索'],['battle','⚔️','對戰'],['dex','📖','圖鑑'],['shop','🎒','商店']].map(a=>'<button class="'+(tab===a[0]?'active':'')+'" onclick="go(\''+a[0]+'\')">'+a[1]+'<br>'+a[2]+'</button>').join('')}
-render();
+render();setInterval(()=>{if(tab==='home')render()},1100);
 </script></html>
 <!-- GitHub Pages redeploy check 2026-11-18 -->
